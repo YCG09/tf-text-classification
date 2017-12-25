@@ -8,7 +8,7 @@ CNN and RNN with Attention for Text Classification in Tensorflow
 * Numpy
 * Pandas
 
-## Train
+## Training models
 CNN: 
 ```bash
 python train_cnn.py
@@ -18,7 +18,7 @@ RNN:
 python train_rnn.py
 ```
 
-## Evaluate
+## Evaluating models
 ```bash
 python eval.py --checkpoint_dir=./runs/textrnn/trained_result_1512462690/checkpoints --model_type=RNN
 ```
