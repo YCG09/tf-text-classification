@@ -9,11 +9,11 @@ CNN and RNN with Attention for Text Classification in Tensorflow
 * Pandas
 
 ## Train
-CNN model: 
+CNN: 
 ```bash
 python train_cnn.py
 ```
-RNN model:
+RNN:
 ```bash
 python train_rnn.py
 ```
@@ -22,3 +22,4 @@ python train_rnn.py
 ```bash
 python eval.py --checkpoint_dir=./runs/textrnn/trained_result_1512462690/checkpoints --model_type=RNN
 ```
+If evaluation data has labels, `has_label` should be set to `True`.
