@@ -3,7 +3,7 @@ CNN and RNN with Attention for Text Classification in Tensorflow
 ## Requirements
 
 * Python 3
-* Tensorflow >= 1.0
+* Tensorflow 1.0
 * Scikit-learn
 * Numpy
 * Pandas
