@@ -1,19 +1,21 @@
-CNN and RNN with Attention for Text Classification in Tensorflow
+## Environment setup
+* Requirements: python3, tensorflow1.0, sklearn, numpy, pandas and jieba
+```bash
+pip install -r requirements.txt
+```
 
-## Requirements
-
-* Python 3
-* Tensorflow 1.0
-* Scikit-learn
-* Numpy
-* Pandas
+## Data preprocessing
+* Text cleaning and word segmentation
+```bash
+python seg_words.py
+```
 
 ## Training models
-CNN: 
+* CNN
 ```bash
 python train_cnn.py
 ```
-RNN:
+* RNN with attention
 ```bash
 python train_rnn.py
 ```
