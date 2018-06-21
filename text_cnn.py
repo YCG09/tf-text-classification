@@ -1,5 +1,4 @@
 #-*- coding:utf-8 -*-
-
 import tensorflow as tf
 import numpy as np
 
@@ -7,7 +6,7 @@ class TextCNN(object):
     """
     CNN for text classification
     """
-    def __init__(self, vocab_size, embedding_size, sequence_length, filter_sizes, num_filters, 
+    def __init__(self, vocab_size, embedding_size, sequence_length, filter_sizes, num_filters,
             num_classes, learning_rate, grad_clip, l2_reg_lambda=0.0):
         """
         - vocab_size : vocabulary size
@@ -43,8 +42,8 @@ class TextCNN(object):
             with tf.name_scope('conv-maxpool-%s' % filter_size) as scope:
                 # Convolution Layer, embedding_inputs_expanded shape: (batch_size, sequence_length, embedding_size, 1)
                 # filter_shape: (filter_size, embedding_size, 1, num_filters)
-                conv = tf.layers.conv2d(embedding_inputs_expanded, filters=num_filters, kernel_size=[filter_size, embedding_size], 
-                        strides=[1, 1], padding='valid', activation=tf.nn.relu, kernel_initializer=tf.truncated_normal_initializer(stddev=0.1), 
+                conv = tf.layers.conv2d(embedding_inputs_expanded, filters=num_filters, kernel_size=[filter_size, embedding_size],
+                        strides=[1, 1], padding='valid', activation=tf.nn.relu, kernel_initializer=tf.truncated_normal_initializer(stddev=0.1),
                         bias_initializer=tf.constant_initializer(0.1), name=scope+'conv')
                 # Maxpooling Layer, conv shape: (batch_size, sequence_length - filter_size + 1, 1, num_filters)
                 # N = (W-F+2P)/S+1
@@ -74,7 +73,7 @@ class TextCNN(object):
             l2_loss += tf.nn.l2_loss(fc_w)
             l2_loss += tf.nn.l2_loss(fc_b)
             self.loss = tf.reduce_mean(cross_entropy) + l2_reg_lambda * l2_loss
-        
+
         # Create optimizer
         with tf.name_scope('optimization'):
             optimizer = tf.train.AdamOptimizer(learning_rate)
@@ -89,5 +88,5 @@ class TextCNN(object):
 
 
 if __name__ == '__main__':
-    model = TextCNN(vocab_size=8000, embedding_size=150, sequence_length=100, filter_sizes=list(map(int, "3,4,5".split(","))), num_filters=128, 
+    model = TextCNN(vocab_size=8000, embedding_size=150, sequence_length=100, filter_sizes=list(map(int, "3,4,5".split(","))), num_filters=128,
             num_classes=30, learning_rate=0.001, grad_clip=5.0, l2_reg_lambda=0.01)

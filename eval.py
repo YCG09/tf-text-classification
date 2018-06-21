@@ -1,5 +1,4 @@
 #-*- coding:utf-8 -*-
-
 import os
 import time
 import json
@@ -41,9 +40,9 @@ def evaluate():
 
     if FLAGS.model_type == None or not FLAGS.model_type in ['CNN', 'RNN']:
         raise ValueError("model_type must be CNN or RNN")
- 
+
     root_dir = os.path.join(FLAGS.checkpoint_dir, '..') + '/'
-    
+
     # Create result directory
     eval_dir = os.path.join(root_dir, 'eval')
     if not os.path.exists(eval_dir):
@@ -61,38 +60,38 @@ def evaluate():
     # ==================================================
     with tf.Graph().as_default():
         tf_config = tf.ConfigProto(
-            allow_soft_placement=FLAGS.allow_soft_placement, 
+            allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement)
         tf_config.gpu_options.allow_growth = FLAGS.gpu_allow_growth
-        
+
         with tf.Session(config=tf_config).as_default() as sess:
             # Model initialization
             if FLAGS.model_type == 'CNN':
                 model = TextCNN(
-                    vocab_size=params['vocab_size'], 
-                    embedding_size=params['embedding_size'], 
-                    sequence_length=params['sequence_length'], 
-                    filter_sizes=list(map(int, params['filter_sizes'].split(","))), 
-                    num_filters=params['num_filters'], 
-                    num_classes=params['num_classes'], 
-                    learning_rate=params['learning_rate'], 
-                    grad_clip=params['grad_clip'], 
+                    vocab_size=params['vocab_size'],
+                    embedding_size=params['embedding_size'],
+                    sequence_length=params['sequence_length'],
+                    filter_sizes=list(map(int, params['filter_sizes'].split(","))),
+                    num_filters=params['num_filters'],
+                    num_classes=params['num_classes'],
+                    learning_rate=params['learning_rate'],
+                    grad_clip=params['grad_clip'],
                     l2_reg_lambda=params['l2_reg_lambda'])
                 feed_dict = {model.keep_prob: 1.0, model.is_training: False}
-            
+
             elif FLAGS.model_type == 'RNN':
                 model = TextRNN(
-                    vocab_size=params['vocab_size'], 
-                    embedding_size=params['embedding_size'], 
-                    sequence_length=params['sequence_length'], 
-                    rnn_size=params['rnn_size'], 
-                    num_layers=params['num_layers'], 
-                    attention_size=params['attention_size'], 
-                    num_classes=params['num_classes'], 
-                    learning_rate=params['learning_rate'], 
+                    vocab_size=params['vocab_size'],
+                    embedding_size=params['embedding_size'],
+                    sequence_length=params['sequence_length'],
+                    rnn_size=params['rnn_size'],
+                    num_layers=params['num_layers'],
+                    attention_size=params['attention_size'],
+                    num_classes=params['num_classes'],
+                    learning_rate=params['learning_rate'],
                     grad_clip=params['grad_clip'])
                 feed_dict = {model.keep_prob: 1.0}
-            
+
             saver = tf.train.Saver(tf.global_variables())
             sess.run(tf.global_variables_initializer())
 
@@ -101,7 +100,7 @@ def evaluate():
             if ckpt and ckpt.model_checkpoint_path:
                 best_model_path = os.path.join('/'.join(ckpt.model_checkpoint_path.split("/")[:-1]), 'best_model')
                 saver.restore(sess, best_model_path)
-            
+
             # Evaluate the model
             print("Start evaluating...\n")
             y_logits = []
@@ -122,14 +121,14 @@ def evaluate():
 
             # Print accuracy if eval examples have label
             if FLAGS.has_label == True:
-                df = pd.DataFrame([line.strip().split("\t") for line in open(FLAGS.eval_data, 'r', encoding='UTF-8').readlines() 
+                df = pd.DataFrame([line.strip().split("\t") for line in open(FLAGS.eval_data, 'r', encoding='UTF-8').readlines()
                     if len(line.strip().split("\t")) == 2], columns=['content', 'real_label'])
                 y_eval_original = label_transformer.inverse_transform(y_eval)
                 eval_accuracy = sum(y_logits_original == y_eval_original) / data_size
                 print("Evaluating Accuracy: {:.3f}\n".format(eval_accuracy))
                 print("Precision, Recall and F1-Score:\n\n", classification_report(y_eval_original, y_logits_original))
             else:
-                df = pd.DataFrame([line.strip() for line in open(FLAGS.eval_data, 'r', encoding='UTF-8').readlines() 
+                df = pd.DataFrame([line.strip() for line in open(FLAGS.eval_data, 'r', encoding='UTF-8').readlines()
                     if line.strip()], columns=['content'])
 
             # Save prediction result

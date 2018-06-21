@@ -1,5 +1,4 @@
 #-*- coding:utf-8 -*-
-
 import tensorflow as tf
 import numpy as np
 
@@ -7,7 +6,7 @@ class TextRNN(object):
     """
     RNN with Attention mechanism for text classification
     """
-    def __init__(self, vocab_size, embedding_size, sequence_length, rnn_size, num_layers, 
+    def __init__(self, vocab_size, embedding_size, sequence_length, rnn_size, num_layers,
         attention_size, num_classes, learning_rate, grad_clip):
         """
         - vocab_size : vocabulary size
@@ -51,7 +50,7 @@ class TextRNN(object):
             # embedding_inputs shape: (batch_size, sequence_length, embedding_size)
             # rnn_output, _ = tf.nn.dynamic_rnn(fw_rnn_cell, inputs=embedding_inputs, sequence_length=self.seq_len, dtype=tf.float32)
             rnn_output, _ = tf.nn.bidirectional_dynamic_rnn(fw_rnn_cell, bw_rnn_cell, inputs=embedding_inputs, sequence_length=self.seq_len, dtype=tf.float32)
-    
+
         # In case of Bi-RNN, concatenate the forward and the backward RNN outputs
         if isinstance(rnn_output, tuple):
             rnn_output = tf.concat(rnn_output, 2)
@@ -92,7 +91,7 @@ class TextRNN(object):
         with tf.name_scope('loss'):
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.input_y)
             self.loss = tf.reduce_mean(cross_entropy)
-        
+
         # Create optimizer
         with tf.name_scope('optimization'):
             optimizer = tf.train.AdamOptimizer(learning_rate)
@@ -107,5 +106,5 @@ class TextRNN(object):
 
 
 if __name__ == '__main__':
-    model = TextRNN(vocab_size=8000, embedding_size=150, sequence_length=100, rnn_size=100, num_layers=2, 
+    model = TextRNN(vocab_size=8000, embedding_size=150, sequence_length=100, rnn_size=100, num_layers=2,
             attention_size=50, num_classes=30, learning_rate=0.001, grad_clip=5.0)

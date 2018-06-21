@@ -1,5 +1,4 @@
 #-*- coding:utf-8 -*-
-
 import os
 import time
 import json
@@ -77,7 +76,7 @@ def train_cnn():
     print("Loading data...\n")
     x, y = data_helpers.load_data(FLAGS.data_file, FLAGS.sequence_length, FLAGS.vocab_size, root_dir=root_dir)
     FLAGS.num_classes = len(y[0])
-    
+
     # Split dataset
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=FLAGS.test_size, stratify=y, random_state=0)
     x_val, x_test, y_val, y_test = train_test_split(x_test, y_test, test_size=0.5, random_state=0)
@@ -86,20 +85,20 @@ def train_cnn():
     # ==================================================
     with tf.Graph().as_default():
         tf_config = tf.ConfigProto(
-            allow_soft_placement=FLAGS.allow_soft_placement, 
+            allow_soft_placement=FLAGS.allow_soft_placement,
             log_device_placement=FLAGS.log_device_placement)
         tf_config.gpu_options.allow_growth = FLAGS.gpu_allow_growth
-        
+
         with tf.Session(config=tf_config).as_default() as sess:
             cnn = TextCNN(
-		vocab_size=FLAGS.vocab_size, 
-		embedding_size=FLAGS.embedding_size, 
-		sequence_length=FLAGS.sequence_length, 
-		filter_sizes=list(map(int, FLAGS.filter_sizes.split(","))), 
-		num_filters=FLAGS.num_filters, 
-            	num_classes=FLAGS.num_classes, 
-		learning_rate=FLAGS.learning_rate, 
-		grad_clip=FLAGS.grad_clip, 
+		vocab_size=FLAGS.vocab_size,
+		embedding_size=FLAGS.embedding_size,
+		sequence_length=FLAGS.sequence_length,
+		filter_sizes=list(map(int, FLAGS.filter_sizes.split(","))),
+		num_filters=FLAGS.num_filters,
+            	num_classes=FLAGS.num_classes,
+		learning_rate=FLAGS.learning_rate,
+		grad_clip=FLAGS.grad_clip,
             	l2_reg_lambda=FLAGS.l2_reg_lambda)
 
             # Output directory for models and summaries
@@ -116,14 +115,14 @@ def train_cnn():
             val_summary_dir = os.path.join(out_dir, 'summaries', 'val')
             train_summary_writer = tf.summary.FileWriter(train_summary_dir, sess.graph)
             val_summary_writer = tf.summary.FileWriter(val_summary_dir, sess.graph)
-            
+
             # Checkpoint directory, will not create itself
             checkpoint_dir = os.path.abspath(os.path.join(out_dir, 'checkpoints'))
             checkpoint_prefix = os.path.join(checkpoint_dir, 'model.ckpt')
             if not os.path.exists(checkpoint_dir):
                 os.makedirs(checkpoint_dir)
             saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
-            
+
             # Initialize all variables
             sess.run(tf.global_variables_initializer())
 
@@ -148,7 +147,7 @@ def train_cnn():
                     # Training model on x_batch and y_batch
                     x_batch, y_batch = zip(*batch)
                     feed_dict = {cnn.input_x: x_batch, cnn.input_y: y_batch, cnn.keep_prob: FLAGS.dropout_keep_prob, cnn.is_training: True}
-                    _, global_step, train_summaries, train_loss, train_accuracy = sess.run([cnn.train_op, cnn.global_step, 
+                    _, global_step, train_summaries, train_loss, train_accuracy = sess.run([cnn.train_op, cnn.global_step,
                         merged_summary, cnn.loss, cnn.accuracy], feed_dict=feed_dict)
 
                     # Evaluates model on val set
@@ -158,9 +157,9 @@ def train_cnn():
                         feed_dict = {cnn.input_x: x_val, cnn.input_y: y_val, cnn.keep_prob: FLAGS.dropout_keep_prob, cnn.is_training: False}
                         val_summaries, val_loss, val_accuracy = sess.run([merged_summary, cnn.loss, cnn.accuracy], feed_dict=feed_dict)
                         val_summary_writer.add_summary(val_summaries, global_step)
-                        print("Epoch: {}, global step: {}, training speed: {:.3f}sec/batch".format(epoch, 
-                            global_step, (end - start) / FLAGS.evaluate_every)) 
-                        print("train loss: {:.3f}, train accuracy: {:.3f}, val loss: {:.3f}, val accuracy: {:.3f}\n".format(train_loss, 
+                        print("Epoch: {}, global step: {}, training speed: {:.3f}sec/batch".format(epoch,
+                            global_step, (end - start) / FLAGS.evaluate_every))
+                        print("train loss: {:.3f}, train accuracy: {:.3f}, val loss: {:.3f}, val accuracy: {:.3f}\n".format(train_loss,
                             train_accuracy, val_loss, val_accuracy))
                         # If improved, save the model
                         if val_accuracy > best_val_accuracy:
@@ -175,7 +174,7 @@ def train_cnn():
             os.rename(best_model_prefix + '.index', os.path.join(checkpoint_dir, 'best_model.index'))
             os.rename(best_model_prefix + '.meta', os.path.join(checkpoint_dir, 'best_model.meta'))
             os.rename(best_model_prefix + '.data-00000-of-00001', os.path.join(checkpoint_dir, 'best_model.data-00000-of-00001'))
-            
+
             # Testing on test set
             print("\nTraining complete, testing the best model on test set...\n")
             saver.restore(sess, os.path.join(checkpoint_dir, 'best_model'))
