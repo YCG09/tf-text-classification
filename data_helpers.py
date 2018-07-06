@@ -1,3 +1,4 @@
+#-*- coding:utf-8 -*-
 import json
 import numpy as np
 from collections import Counter
@@ -17,7 +18,7 @@ def build_vocab(text, save_path, vocab_size):
     words_index = {word: index + 1 for index, word in enumerate(vocabulary)}
     with open(save_path + 'words_index.json', 'w', encoding = 'utf-8') as outfile:
         json.dump(words_index, outfile, indent = 4, ensure_ascii=False)
-    
+
     return words_index
 
 def read_vocab(vocab_path):
@@ -25,7 +26,7 @@ def read_vocab(vocab_path):
     Read vocabulary
     """
     words_index = json.loads(open(vocab_path + 'words_index.json', 'r', encoding = 'utf-8').read())
-    
+
     return words_index
 
 def pad_sentences(sentences_indexed, sequence_length):
@@ -76,7 +77,7 @@ def load_data(data_file, sequence_length, vocab_size=10000, root_dir=None, has_l
     sentences = []
     labels = []
     data = open(data_file, 'r', encoding='UTF-8')
-    
+
     # Whether the inference mode
     if has_label==True:
         for parts in [line.strip().split("\t") for line in data]:

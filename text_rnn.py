@@ -26,18 +26,19 @@ class TextRNN(object):
         self.keep_prob = tf.placeholder(tf.float32, name='keep_prob')
         self.global_step = tf.Variable(0, trainable=False, name='global_step')
 
+        # Define Basic RNN Cell
+        def basic_rnn_cell(rnn_size):
+            return tf.contrib.rnn.GRUCell(rnn_size)
+            # return tf.contrib.rnn.LSTMCell(rnn_size)
+
         # Define Forward RNN Cell
         with tf.name_scope('fw_rnn'):
-            fw_basic_cell = tf.contrib.rnn.GRUCell(rnn_size)
-            # fw_basic_cell = tf.contrib.rnn.LSTMCell(rnn_size)
-            fw_rnn_cell = tf.contrib.rnn.MultiRNNCell([fw_basic_cell for _ in range(num_layers)])
+            fw_rnn_cell = tf.contrib.rnn.MultiRNNCell([basic_rnn_cell(rnn_size) for _ in range(num_layers)])
             fw_rnn_cell = tf.contrib.rnn.DropoutWrapper(fw_rnn_cell, output_keep_prob=self.keep_prob)
 
         # Define Backward RNN Cell
         with tf.name_scope('bw_rnn'):
-            bw_basic_cell = tf.contrib.rnn.GRUCell(rnn_size)
-            # bw_basic_cell = tf.contrib.rnn.LSTMCell(rnn_size)
-            bw_rnn_cell = tf.contrib.rnn.MultiRNNCell([bw_basic_cell for _ in range(num_layers)])
+            bw_rnn_cell = tf.contrib.rnn.MultiRNNCell([basic_rnn_cell(rnn_size) for _ in range(num_layers)])
             bw_rnn_cell = tf.contrib.rnn.DropoutWrapper(bw_rnn_cell, output_keep_prob=self.keep_prob)
 
         # Embedding layer
