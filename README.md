@@ -5,7 +5,7 @@ pip install -r requirements.txt
 ```
 
 ## Data preprocessing
-* Text cleaning and word segmentation
+* Text cleaning and word segmentation, data format: label\tsentence
 ```bash
 python seg_words.py
 ```
