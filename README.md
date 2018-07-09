@@ -1,5 +1,5 @@
 ## Environment setup
-* Requirements: python3, tensorflow1.3, sklearn, numpy, pandas and jieba
+* Requirements: python3, tensorflow>=1.0, sklearn, numpy, pandas and jieba
 ```bash
 pip install -r requirements.txt
 ```
