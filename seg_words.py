@@ -25,7 +25,7 @@ def clean_str(string):
     """
     Cleaning sentence
     """
-    string = re.sub(r'http[s]?://[a-z0-9./?=_-]+', '', string)
+    string = re.sub(r'http[s]?://[a-z0-9./?=_-]+', '', string.strip().lower())
     string = re.sub(r'[0-9_a-z]+([-+.][0-9_a-z]+)*@[0-9_a-z]+([-.][0-9_a-z]+)*\.[0-9_a-z]+([-.][0-9_a-z]+)*', '', string)
     string = re.sub(r'\s+', ' ', string)
 
