@@ -21,12 +21,13 @@ def load_dict(path):
 
     return stop, single
 
-def clean_str(string):
+def clean_sentence(string):
     """
     Cleaning sentence
     """
     string = re.sub(r'http[s]?://[a-z0-9./?=_-]+', '', string.strip().lower())
     string = re.sub(r'[0-9_a-z]+([-+.][0-9_a-z]+)*@[0-9_a-z]+([-.][0-9_a-z]+)*\.[0-9_a-z]+([-.][0-9_a-z]+)*', '', string)
+    string = re.sub(r'[0-9]{7,}', '', string)
     string = re.sub(r'\s+', ' ', string)
 
     return string
@@ -36,7 +37,7 @@ def seg_words(sentence):
     Cut sentence into words
     """
     words_list = []
-    for seg in pseg.cut(clean_str(sentence)):
+    for seg in pseg.cut(clean_sentence(sentence)):
         if seg.word not in stop and seg.flag not in ['w', 'ns', 'nr', 't', 'r', 'u', 'e', 'y', 'o']:
             if len(seg.word) >= 2 or seg.word in single:
                 words_list.append(seg.word)
