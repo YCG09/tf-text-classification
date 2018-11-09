@@ -13,24 +13,24 @@ def load_dict(path):
     """
     jieba.load_userdict(path + 'default.dic')
 
-    stopWords = open(path + 'stop.dic', 'r', encoding='UTF-8').readlines()
-    stop = {}.fromkeys([line.strip() for line in stopWords])
+    stop_words = open(path + 'stop.dic', 'r', encoding='UTF-8').readlines()
+    stop = {}.fromkeys([line.strip() for line in stop_words])
 
-    singleWord = open(path + 'single.dic', 'r', encoding='UTF-8').readlines()
-    single = {}.fromkeys([line.strip() for line in singleWord])
+    single_words = open(path + 'single.dic', 'r', encoding='UTF-8').readlines()
+    single = {}.fromkeys([line.strip() for line in single_words])
 
     return stop, single
 
-def clean_sentence(string):
+def clean_sentence(sentence):
     """
     Cleaning sentence
     """
-    string = re.sub(r'http[s]?://[a-z0-9./?=_-]+', '', string.strip().lower())
-    string = re.sub(r'[0-9_a-z]+([-+.][0-9_a-z]+)*@[0-9_a-z]+([-.][0-9_a-z]+)*\.[0-9_a-z]+([-.][0-9_a-z]+)*', '', string)
-    string = re.sub(r'[0-9]{7,}', '', string)
-    string = re.sub(r'\s+', ' ', string)
+    sentence = re.sub(r'http[s]?://[a-z0-9./?=_-]+', '', sentence.strip().lower())
+    sentence = re.sub(r'[0-9_a-z]+([-+.][0-9_a-z]+)*@[0-9_a-z]+([-.][0-9_a-z]+)*\.[0-9_a-z]+([-.][0-9_a-z]+)*', '', sentence)
+    sentence = re.sub(r'[0-9]{7,}', '', sentence)
+    sentence = re.sub(r'\s+', ' ', sentence)
 
-    return string
+    return sentence
 
 def seg_words(sentence):
     """
