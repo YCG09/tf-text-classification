@@ -5,6 +5,7 @@ from collections import Counter
 from sklearn import preprocessing
 from sklearn.externals import joblib
 
+
 def build_vocab(text, save_path, vocab_size):
     """
     Build vocabulary, for the next use
@@ -21,6 +22,7 @@ def build_vocab(text, save_path, vocab_size):
 
     return words_index
 
+
 def read_vocab(vocab_path):
     """
     Read vocabulary
@@ -28,6 +30,7 @@ def read_vocab(vocab_path):
     words_index = json.loads(open(vocab_path + 'words_index.json', 'r', encoding = 'utf-8').read())
 
     return words_index
+
 
 def pad_sentences(sentences_indexed, sequence_length):
     """
@@ -39,6 +42,7 @@ def pad_sentences(sentences_indexed, sequence_length):
         sentences_padded.append(sentence[:sequence_length - 1] + [0] * max(num_padding, 1))
 
     return sentences_padded
+
 
 def process_data(data_file, root_dir, sentences, labels, sequence_length, vocab_size, is_training):
     """
@@ -70,13 +74,14 @@ def process_data(data_file, root_dir, sentences, labels, sequence_length, vocab_
 
     return x, y
 
+
 def load_data(data_file, sequence_length, vocab_size=10000, root_dir=None, has_label=True, is_training=True):
     """
     Load data from files
     """
     sentences = []
     labels = []
-    data = open(data_file, 'r', encoding='UTF-8')
+    data = open(data_file, 'r', encoding='utf-8')
 
     # Whether the inference mode
     if has_label==True:
@@ -92,6 +97,7 @@ def load_data(data_file, sequence_length, vocab_size=10000, root_dir=None, has_l
     x, y = process_data(data_file, root_dir, sentences, labels, sequence_length, vocab_size, is_training)
 
     return x, y
+
 
 def batch_iter(data, batch_size, shuffle=True):
     """
@@ -111,11 +117,13 @@ def batch_iter(data, batch_size, shuffle=True):
         end_index = min((batch_num + 1) * batch_size, data_size)
         yield data_shuffled[start_index:end_index]
 
+
 def real_len(x_batch):
     """
     Get actual lengths of sequences
     """
     return np.array([list(x).index(0) + 1 for x in x_batch])
+
 
 if __name__ == "__main__":
     x, y = load_data('./data/traindata', 200, 10000)  # train

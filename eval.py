@@ -34,6 +34,7 @@ tf.flags.DEFINE_boolean('gpu_allow_growth', True, "GPU memory allocation mode (d
 FLAGS = tf.flags.FLAGS
 FLAGS._parse_flags()
 
+
 def evaluate():
     if FLAGS.checkpoint_dir == None or not os.path.exists(FLAGS.checkpoint_dir):
         raise IOError("checkpoint_dir not found")
@@ -121,14 +122,14 @@ def evaluate():
 
             # Print accuracy if eval examples have label
             if FLAGS.has_label == True:
-                df = pd.DataFrame([line.strip().split("\t") for line in open(FLAGS.eval_data, 'r', encoding='UTF-8').readlines()
+                df = pd.DataFrame([line.strip().split("\t") for line in open(FLAGS.eval_data, 'r', encoding='utf-8').readlines()
                     if len(line.strip().split("\t")) == 2], columns=['content', 'real_label'])
                 y_eval_original = label_transformer.inverse_transform(y_eval)
                 eval_accuracy = sum(y_logits_original == y_eval_original) / data_size
                 print("Evaluating Accuracy: {:.3f}\n".format(eval_accuracy))
                 print("Precision, Recall and F1-Score:\n\n", classification_report(y_eval_original, y_logits_original))
             else:
-                df = pd.DataFrame([line.strip() for line in open(FLAGS.eval_data, 'r', encoding='UTF-8').readlines()
+                df = pd.DataFrame([line.strip() for line in open(FLAGS.eval_data, 'r', encoding='utf-8').readlines()
                     if line.strip()], columns=['content'])
 
             # Save prediction result

@@ -198,5 +198,6 @@ def train_cnn():
             print("Word embedding saving...\n")
             np.save(os.path.join(out_dir, 'embedding.npy'), sess.run(cnn.embedding))
 
+
 if __name__ == '__main__':
     train_cnn()

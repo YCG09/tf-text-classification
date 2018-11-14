@@ -2,6 +2,7 @@
 import tensorflow as tf
 import numpy as np
 
+
 class TextRNN(object):
     """
     RNN with Attention mechanism for text classification

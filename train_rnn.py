@@ -201,5 +201,6 @@ def train_rnn():
             print("Word embedding saving...\n")
             np.save(os.path.join(out_dir, 'embedding.npy'), sess.run(rnn.embedding))
 
+
 if __name__ == '__main__':
     train_rnn()
