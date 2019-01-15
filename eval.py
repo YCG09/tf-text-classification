@@ -32,7 +32,6 @@ tf.flags.DEFINE_boolean('log_device_placement', False, "Log placement of ops on 
 tf.flags.DEFINE_boolean('gpu_allow_growth', True, "GPU memory allocation mode (default: True)")
 
 FLAGS = tf.flags.FLAGS
-FLAGS._parse_flags()
 
 
 def evaluate():

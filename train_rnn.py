@@ -18,6 +18,7 @@ warnings.filterwarnings("ignore")
 
 # Data loading parameters
 tf.flags.DEFINE_string('data_file', './data/traindata', "Data source for the text data")
+tf.flags.DEFINE_integer('num_classes', None, "Number classes of labels in data")
 tf.flags.DEFINE_float('test_size', 0.05, "Percentage of data to use for validation and test (default: 0.05)")
 tf.flags.DEFINE_integer('vocab_size', 9000, "Select words to build vocabulary, according to term frequency (default: 9000)")
 tf.flags.DEFINE_integer('sequence_length', 100, "Padding sentences to same length, cut off when necessary (default: 100)")
@@ -44,9 +45,8 @@ tf.flags.DEFINE_boolean('log_device_placement', False, "Log placement of ops on 
 tf.flags.DEFINE_boolean('gpu_allow_growth', True, "GPU memory allocation mode (default: True)")
 
 FLAGS = tf.flags.FLAGS
-FLAGS._parse_flags()
 print("\nParameters:")
-for param, value in sorted(FLAGS.__flags.items()):
+for param, value in sorted(FLAGS.flag_values_dict().items()):
     print("{} = {}".format(param.upper(), value))
 print("")
 
@@ -192,7 +192,7 @@ def train_rnn():
             # Save parameters
             print("Parameters saving...\n")
             params = {}
-            for param, value in FLAGS.__flags.items():
+            for param, value in FLAGS.flag_values_dict().items():
                 params[param] = value
             with open(os.path.join(out_dir, 'parameters.json'), 'w') as outfile:
                 json.dump(params, outfile, indent=4, sort_keys=True, ensure_ascii=False)

@@ -91,7 +91,7 @@ class TextRNN(object):
 
         # Calculate cross-entropy loss
         with tf.name_scope('loss'):
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.input_y)
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.logits, labels=self.input_y)
             self.loss = tf.reduce_mean(cross_entropy)
 
         # Create optimizer
