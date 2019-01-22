@@ -4,14 +4,15 @@ import numpy as np
 from collections import Counter
 from sklearn import preprocessing
 from sklearn.externals import joblib
+from .seg_words import text_preprocess, seg_words
 
 
-def build_vocab(text, save_path, vocab_size):
+def build_vocab(sentences, save_path, vocab_size):
     """
-    Build vocabulary, for the next use
+    Build vocabulary, for future use
     """
     all_words = []
-    for sentence in text:
+    for sentence in sentences:
         all_words.extend(sentence)
 
     word_counts = Counter(all_words)
@@ -44,38 +45,42 @@ def pad_sentences(sentences_indexed, sequence_length):
     return sentences_padded
 
 
-def process_data(data_file, root_dir, sentences, labels, sequence_length, vocab_size, is_training):
+def process_data(data_file, sentences, labels, sequence_length, vocab_size, mode, output_dir):
     """
     Transform words and labels to index
     """
-    # Use the directory of data_file instead of root_dir when the latter is empty
-    if root_dir == None:
-        root_dir = '/'.join(data_file.split("/")[:-1]) + '/'
-    elif not root_dir[-1] == '/':
-        root_dir += '/'
+    # Use the directory of data_file instead of output_dir when the latter is empty
+    if output_dir == None:
+        output_dir = '/'.join(data_file.split("/")[:-1]) + '/'
+    elif not output_dir[-1] == '/':
+        output_dir += '/'
 
+    if mode != 'inference':
+        sentences = text_preprocess(sentences)
+    else:
+        sentences = [seg_words(sentences[0])]
+    
     words_index = {}
     label_transformer = preprocessing.LabelBinarizer()
-    if is_training == True:
-        words_index = build_vocab(sentences, root_dir, vocab_size)
+    if mode == 'train':
+        words_index = build_vocab(sentences, output_dir, vocab_size)
         label_transformer.fit(labels)
-        joblib.dump(label_transformer, root_dir + 'label_transformer.pkl')
+        joblib.dump(label_transformer, output_dir + 'label_transformer.pkl')
     else:
-        words_index = read_vocab(root_dir)
-        label_transformer = joblib.load(root_dir + 'label_transformer.pkl')
+        words_index = read_vocab(output_dir)
+        label_transformer = joblib.load(output_dir + 'label_transformer.pkl')
 
     x, y = [], []
     for sentence in sentences:
         x.append([words_index[word] for word in sentence if word in words_index])
     x = pad_sentences(x, sequence_length)
-    # In inference mode, data has no labels
     if len(labels) > 0:
         y = label_transformer.transform(labels)
 
     return x, y
 
 
-def load_data(data_file, sequence_length, vocab_size=10000, root_dir=None, has_label=True, is_training=True):
+def load_data(data_file, sequence_length, vocab_size=10000, mode='train', output_dir=None):
     """
     Load data from files
     """
@@ -83,18 +88,17 @@ def load_data(data_file, sequence_length, vocab_size=10000, root_dir=None, has_l
     labels = []
     data = open(data_file, 'r', encoding='utf-8')
 
-    # Whether the inference mode
-    if has_label==True:
-        for parts in [line.strip().split("\t") for line in data]:
-            if len(parts) == 2:
-                sentences.append(list(parts[0].split(" ")))
-                labels.append(parts[1])
+    # In prediction mode, data have no labels
+    if mode == 'train' or mode == 'evaluation':
+        parts = [line.strip().split("\t", 1) for line in data if len(line.strip().split("\t", 1)) == 2]
+        labels, sentences = [elem[0] for elem in parts], [elem[1] for elem in parts]
+    elif mode == 'prediction':
+        sentences = [line.strip() for line in data if line.strip()]
     else:
-        for sentence in [line.strip() for line in data if line.strip()]:
-            sentences.append(list(sentence.split(" ")))
+        raise ValueError("mode must be train, evaluation or prediction")
 
     # Convert words and labels
-    x, y = process_data(data_file, root_dir, sentences, labels, sequence_length, vocab_size, is_training)
+    x, y = process_data(data_file, sentences, labels, sequence_length, vocab_size, mode, output_dir)
 
     return x, y
 
@@ -126,6 +130,6 @@ def real_len(x_batch):
 
 
 if __name__ == "__main__":
-    x, y = load_data('./data/traindata', 200, 10000)  # train
-    # x, y = load_data('./data/testdata', 200, is_training=False)  # test
+    x, y = load_data('../data/train_data', 200, 10000, mode='train')  # train
+    # x, y = load_data('../data/test_data', 200, mode='evaluation')  # test
     print("First indexed sentence: {}\nLength of sentence: {}\nFirst onehot label: {}\nLength of label: {}".format(x[0], len(x[0]), y[0], len(y[0])))

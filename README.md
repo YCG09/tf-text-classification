@@ -4,13 +4,7 @@
 pip install -r requirements.txt
 ```
 
-## Data preprocessing
-* Text cleaning and word segmentation, data format: label\tsentence
-```bash
-python seg_words.py
-```
-
-## Training models
+## Training
 * CNN
 ```bash
 python train_cnn.py
@@ -19,9 +13,20 @@ python train_cnn.py
 ```bash
 python train_rnn.py
 ```
+#### the data format is as follows: label '\t' text
 
-## Evaluating models
+## Testing
+* evaluation mode:
 ```bash
-python eval.py --checkpoint_dir=./runs/textrnn/trained_result_1512462690/checkpoints --model_type=RNN
+python test.py --checkpoint_dir=./runs/textcnn/trained_result_1548144557/checkpoints --model_type=CNN
 ```
-If evaluation data has labels, `has_label` should be set to `True`.
+* prediction mode:
+```bash
+python test.py --checkpoint_dir=./runs/textcnn/trained_result_1548144557/checkpoints --model_type=CNN --test_mode=prediction
+```
+
+## Inference
+```bash
+python inference.py --checkpoint_dir=./runs/textrnn/trained_result_1548145204/checkpoints --model_type=RNN
+```
+

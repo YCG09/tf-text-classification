@@ -66,6 +66,7 @@ class TextCNN(object):
             fc_w = tf.get_variable('fc_w', shape=[self.final_output.shape[1].value, num_classes], initializer=tf.contrib.layers.xavier_initializer())
             fc_b = tf.Variable(tf.constant(0.1, shape=[num_classes]), name='fc_b')
             self.logits = tf.matmul(self.final_output, fc_w) + fc_b
+            self.logits_softmax = tf.nn.softmax(self.logits)
             self.predictions = tf.argmax(self.logits, 1, name='predictions')
 
         # Calculate cross-entropy loss

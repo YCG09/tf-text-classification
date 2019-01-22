@@ -3,14 +3,14 @@ import os
 import time
 import json
 import warnings
-import data_helpers
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from text_cnn import TextCNN
-from text_rnn import TextRNN
 from sklearn.externals import joblib
 from sklearn.metrics import classification_report
+import preprocess.data_helpers as data_helpers
+from text_classifier.text_cnn import TextCNN
+from text_classifier.text_rnn import TextRNN
 
 warnings.filterwarnings("ignore")
 
@@ -18,8 +18,9 @@ warnings.filterwarnings("ignore")
 # ==================================================
 
 # Data loading parameters
-tf.flags.DEFINE_string('eval_data', './data/evaldata', "Data source for the evaluation data")
-tf.flags.DEFINE_boolean('has_label', False, "Whether the evaluation data has labels (default: False)")
+tf.flags.DEFINE_string('test_data', './data/test_data', "Data source for the test data")
+tf.flags.DEFINE_string('test_mode', 'evaluation', "In evaluation mode, the data should have labels, \
+                        which is contrary to that of prediction mode (default: evaluation)")
 
 # Evaluating parameters
 tf.flags.DEFINE_integer('batch_size', 256, "Batch size (default: 256)")
@@ -34,29 +35,24 @@ tf.flags.DEFINE_boolean('gpu_allow_growth', True, "GPU memory allocation mode (d
 FLAGS = tf.flags.FLAGS
 
 
-def evaluate():
+def test():
     if FLAGS.checkpoint_dir == None or not os.path.exists(FLAGS.checkpoint_dir):
         raise IOError("checkpoint_dir not found")
 
     if FLAGS.model_type == None or not FLAGS.model_type in ['CNN', 'RNN']:
         raise ValueError("model_type must be CNN or RNN")
 
-    root_dir = os.path.join(FLAGS.checkpoint_dir, '..') + '/'
-
-    # Create result directory
-    eval_dir = os.path.join(root_dir, 'eval')
-    if not os.path.exists(eval_dir):
-        os.mkdir(eval_dir)
-
     # Load parameters
     print("Loading parameters...\n")
-    params = json.loads(open(root_dir + 'parameters.json').read())
+    base_dir = os.path.abspath(os.path.join(FLAGS.checkpoint_dir, '..')) + '/'
+    params = json.loads(open(base_dir + 'parameters.json').read())
 
     # Load data
-    print("Loading data...\n")
-    x_eval, y_eval = data_helpers.load_data(FLAGS.eval_data, params['sequence_length'], root_dir=root_dir, has_label=FLAGS.has_label, is_training=False)
+    print("Prepareing data...\n")
+    test_data = os.path.abspath(FLAGS.test_data)
+    x_test, y_test = data_helpers.load_data(test_data, params['sequence_length'], mode=FLAGS.test_mode, output_dir=base_dir)
 
-    # Evaluating
+    # Testing
     # ==================================================
     with tf.Graph().as_default():
         tf_config = tf.ConfigProto(
@@ -100,44 +96,50 @@ def evaluate():
             if ckpt and ckpt.model_checkpoint_path:
                 best_model_path = os.path.join('/'.join(ckpt.model_checkpoint_path.split("/")[:-1]), 'best_model')
                 saver.restore(sess, best_model_path)
+            else:
+                raise ValueError("Check model_checkpoint_path in checkpoint file")
 
-            # Evaluate the model
-            print("Start evaluating...\n")
+            # Testing on batch
+            print("Start testing...\n")
             y_logits = []
             start = time.time()
-            data_size = len(x_eval)
-            # Generate eval batches
-            eval_batches = data_helpers.batch_iter(x_eval, FLAGS.batch_size, shuffle=False)
-            for x_batch in eval_batches:
+            data_size = len(x_test)
+            # Generate test batches
+            test_batches = data_helpers.batch_iter(x_test, FLAGS.batch_size, shuffle=False)
+            for x_batch in test_batches:
                 feed_dict[model.input_x] = x_batch
                 if FLAGS.model_type == 'RNN':
                     feed_dict[model.seq_len] = data_helpers.real_len(x_batch)
                 batch_predictions = sess.run(model.logits, feed_dict=feed_dict)
                 y_logits.extend(batch_predictions)
-            print("Mission complete, total number of eval examples: {}, evaluating speed: {:.0f} examples/sec\n".format(
+            print("Mission complete, total number of test examples: {}, testing speed: {:.0f} examples/sec\n".format(
                 data_size, data_size / (time.time() - start)))
-            label_transformer = joblib.load(os.path.join(root_dir, 'label_transformer.pkl'))
+            label_transformer = joblib.load(os.path.join(base_dir, 'label_transformer.pkl'))
             y_logits_original = label_transformer.inverse_transform(np.array(y_logits))
 
-            # Print accuracy if eval examples have label
-            if FLAGS.has_label == True:
-                df = pd.DataFrame([line.strip().split("\t") for line in open(FLAGS.eval_data, 'r', encoding='utf-8').readlines()
-                    if len(line.strip().split("\t")) == 2], columns=['content', 'real_label'])
-                y_eval_original = label_transformer.inverse_transform(y_eval)
-                eval_accuracy = sum(y_logits_original == y_eval_original) / data_size
-                print("Evaluating Accuracy: {:.3f}\n".format(eval_accuracy))
-                print("Precision, Recall and F1-Score:\n\n", classification_report(y_eval_original, y_logits_original))
+            # Print accuracy if test examples have labels
+            if FLAGS.test_mode == 'evaluation':
+                columns = ['real_label', 'content']
+                df = pd.DataFrame([line.strip().split("\t", 1) for line in open(test_data, 'r', encoding='utf-8').readlines()
+                    if len(line.strip().split("\t", 1)) == 2], columns=columns)[list(reversed(columns))]
+                y_test_original = label_transformer.inverse_transform(y_test)
+                test_accuracy = sum(y_logits_original == y_test_original) / data_size
+                print("Testing Accuracy: {:.3f}\n".format(test_accuracy))
+                print("Precision, Recall and F1-Score:\n\n", classification_report(y_test_original, y_logits_original))
             else:
-                df = pd.DataFrame([line.strip() for line in open(FLAGS.eval_data, 'r', encoding='utf-8').readlines()
+                df = pd.DataFrame([line.strip() for line in open(test_data, 'r', encoding='utf-8').readlines()
                     if line.strip()], columns=['content'])
 
-            # Save prediction result
+            # Save result
             timestamp = str(int(time.time()))
-            save_path = os.path.abspath(os.path.join(eval_dir, 'predicted_result_' + timestamp + '.csv'))
+            output_dir = os.path.join(base_dir, 'test')
+            if not os.path.exists(output_dir):
+                os.mkdir(output_dir)
+            save_path = os.path.join(output_dir, 'test_result_' + timestamp + '.csv')
             df['predicted_label'] = y_logits_original
-            print("Writing prediction result to {}...\n".format(save_path))
+            print("Writing result to {}...\n".format(save_path))
             df.to_csv(save_path, header=True, index=False, sep='\t', encoding='utf-8')
 
 
 if __name__ == '__main__':
-    evaluate()
+    test()

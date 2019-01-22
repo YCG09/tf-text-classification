@@ -3,13 +3,13 @@ import os
 import time
 import json
 import warnings
-import data_helpers
 import numpy as np
 import tensorflow as tf
-from text_rnn import TextRNN
 from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+import preprocess.data_helpers as data_helpers
+from text_classifier.text_rnn import TextRNN
 
 warnings.filterwarnings("ignore")
 
@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 # ==================================================
 
 # Data loading parameters
-tf.flags.DEFINE_string('data_file', './data/traindata', "Data source for the text data")
+tf.flags.DEFINE_string('data_file', './data/train_data', "Data source for the text data")
 tf.flags.DEFINE_integer('num_classes', None, "Number classes of labels in data")
 tf.flags.DEFINE_float('test_size', 0.05, "Percentage of data to use for validation and test (default: 0.05)")
 tf.flags.DEFINE_integer('vocab_size', 9000, "Select words to build vocabulary, according to term frequency (default: 9000)")
@@ -67,14 +67,15 @@ def train_rnn():
         assert ckpt, "No checkpoint found in {}\n".format(FLAGS.init_model_path)
         assert ckpt.model_checkpoint_path, "No model_checkpoint_path found in checkpoint\n"
 
-    # Create root directory
+    # Create output directory for models and summaries
     timestamp = str(int(time.time()))
-    root_dir = os.path.join(os.path.curdir, 'runs', 'textrnn', 'trained_result_' + timestamp)
-    os.makedirs(root_dir)
+    output_dir = os.path.abspath(os.path.join(os.path.curdir, 'runs', 'textrnn', 'trained_result_' + timestamp))
+    os.makedirs(output_dir)
 
     # Load data
-    print("Loading data...\n")
-    x, y = data_helpers.load_data(FLAGS.data_file, FLAGS.sequence_length, FLAGS.vocab_size, root_dir=root_dir)
+    print("Prepareing data...\n")
+    data = os.path.abspath(FLAGS.data_file)
+    x, y = data_helpers.load_data(data, FLAGS.sequence_length, FLAGS.vocab_size, mode='train', output_dir=output_dir)
     FLAGS.num_classes = len(y[0])
 
     # Split dataset
@@ -91,19 +92,15 @@ def train_rnn():
 
         with tf.Session(config=tf_config).as_default() as sess:
             rnn = TextRNN(
-		vocab_size=FLAGS.vocab_size,
-		embedding_size=FLAGS.embedding_size,
-		sequence_length=FLAGS.sequence_length,
-		rnn_size=FLAGS.rnn_size,
+                vocab_size=FLAGS.vocab_size,
+                embedding_size=FLAGS.embedding_size,
+                sequence_length=FLAGS.sequence_length,
+                rnn_size=FLAGS.rnn_size,
                 num_layers=FLAGS.num_layers,
                 attention_size=FLAGS.attention_size,
             	num_classes=FLAGS.num_classes,
-		learning_rate=FLAGS.learning_rate,
-		grad_clip=FLAGS.grad_clip)
-
-            # Output directory for models and summaries
-            out_dir = os.path.abspath(root_dir)
-            print("Writing to {}...\n".format(out_dir))
+                learning_rate=FLAGS.learning_rate,
+                grad_clip=FLAGS.grad_clip)
 
             # Summaries for loss and accuracy
             tf.summary.scalar("loss", rnn.loss)
@@ -111,13 +108,14 @@ def train_rnn():
             merged_summary = tf.summary.merge_all()
 
             # Summaries dictionary
-            train_summary_dir = os.path.join(out_dir, 'summaries', 'train')
-            val_summary_dir = os.path.join(out_dir, 'summaries', 'val')
+            print("Writing to {}...\n".format(output_dir))
+            train_summary_dir = os.path.join(output_dir, 'summaries', 'train')
+            val_summary_dir = os.path.join(output_dir, 'summaries', 'val')
             train_summary_writer = tf.summary.FileWriter(train_summary_dir, sess.graph)
             val_summary_writer = tf.summary.FileWriter(val_summary_dir, sess.graph)
 
             # Checkpoint directory, will not create itself
-            checkpoint_dir = os.path.abspath(os.path.join(out_dir, 'checkpoints'))
+            checkpoint_dir = os.path.join(output_dir, 'checkpoints')
             checkpoint_prefix = os.path.join(checkpoint_dir, 'model.ckpt')
             if not os.path.exists(checkpoint_dir):
                 os.makedirs(checkpoint_dir)
@@ -184,7 +182,7 @@ def train_rnn():
             feed_dict = {rnn.input_x: x_test, rnn.input_y: y_test, rnn.seq_len: seq_len_test, rnn.keep_prob: 1.0}
             y_logits, test_accuracy = sess.run([rnn.logits, rnn.accuracy], feed_dict=feed_dict)
             print("Testing Accuracy: {:.3f}\n".format(test_accuracy))
-            label_transformer = joblib.load(os.path.join(out_dir, 'label_transformer.pkl'))
+            label_transformer = joblib.load(os.path.join(output_dir, 'label_transformer.pkl'))
             y_test_original = label_transformer.inverse_transform(y_test)
             y_logits_original = label_transformer.inverse_transform(y_logits)
             print("Precision, Recall and F1-Score:\n\n", classification_report(y_test_original, y_logits_original))
@@ -194,12 +192,12 @@ def train_rnn():
             params = {}
             for param, value in FLAGS.flag_values_dict().items():
                 params[param] = value
-            with open(os.path.join(out_dir, 'parameters.json'), 'w') as outfile:
+            with open(os.path.join(output_dir, 'parameters.json'), 'w') as outfile:
                 json.dump(params, outfile, indent=4, sort_keys=True, ensure_ascii=False)
 
             # Save word embedding
             print("Word embedding saving...\n")
-            np.save(os.path.join(out_dir, 'embedding.npy'), sess.run(rnn.embedding))
+            np.save(os.path.join(output_dir, 'embedding.npy'), sess.run(rnn.embedding))
 
 
 if __name__ == '__main__':
