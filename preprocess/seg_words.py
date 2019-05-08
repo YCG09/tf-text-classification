@@ -39,7 +39,7 @@ def clean_sentence(sentence):
     """
     Clean sentence
     """
-    sentence = re.sub(r'http[s]?://[a-z0-9./?=_-]+', '', sentence.strip().lower())
+    sentence = re.sub(r'http[s]?://[&%a-z0-9./?=_-]+', '', sentence.strip().lower())
     sentence = re.sub(r'[0-9_a-z]+([-+.][0-9_a-z]+)*@[0-9_a-z]+([-.][0-9_a-z]+)*\.[0-9_a-z]+([-.][0-9_a-z]+)*', '', sentence)
     sentence = re.sub(r'[0-9]{7,}', '', sentence)
     sentence = re.sub(r'\s+', ' ', sentence)
